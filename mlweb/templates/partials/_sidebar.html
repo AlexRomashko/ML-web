@@ -1,0 +1,49 @@
+{% load static %}
+ <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+        <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'main' %}">
+                        <span data-feather="home"></span>
+                        Мои данные <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="collapse" data-target="#submenu1">
+                        Моделирование функций
+                    </a>
+                    <ul class="collapse" id="submenu1">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'one_exp' %}">Одноэкспоненциальная</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Многоэкспоненциальная</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="collapse" data-target="#submenu2">
+                        Снижение размерности
+                    </a>
+                    <ul class="collapse" id="submenu2">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'linear' %}">Линейные</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Нелинейные</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Подключение Bootstrap и jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <!-- Подключение Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        feather.replace();
+    </script>

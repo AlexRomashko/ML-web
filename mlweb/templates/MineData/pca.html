@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item active">
+            <a href="">Снижение размерности</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            Линейные методы
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <form id="data-form" method="POST" action="{% url 'process_pca' %}">
+    {% csrf_token %}
+    <div class="form-group row">
+      <div class="col-md-12">
+        <div class="btn-group-toggle" id="options-group" data-toggle="buttons">
+          <label class="btn btn-white option-btn active" id="features-btn">
+            <input type="radio" name="options" value="pca" checked> PCA
+          </label>
+          <label class="btn btn-white option-btn" id="percentage-btn">
+            <input type="radio" name="options" value="ica"> ICA
+          </label>
+          <label class="btn btn-white option-btn" id="third-option-btn">
+            <input type="radio" name="options" value="nmf"> NMF
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <div class="col-md-12">
+        <input type="number" class="form-control" id="inputValue" name="inputValue" placeholder="Введите количество признаков" min="0" required>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <label for="dropdown" class="col-md-2 col-form-label" id="method-label">Решение системы уравнений</label>
+      <div class="col-md-10">
+        <select class="form-control" id="dropdown" name="dropdown">
+          <option value="auto">auto</option>
+          <option value="full">full</option>
+          <option value="randomized">randomized</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <div class="col-md-8">
+        <input type="text" class="form-control" id="fileName" name="fileName" placeholder="Выберите файл" readonly>
+      </div>
+      <div class="col-md-4">
+        <button type="button" class="btn btn-secondary ml-0 mt-0" data-toggle="modal" data-target="#fileModal">Выбрать файл</button>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <div class="col-md-12">
+        <button type="submit" class="btn btn-success">Создать</button>
+      </div>
+    </div>
+    {% if csv_file_name %}
+      <div class="d-flex align-items-center ml-6 mt-6" style="margin-top: 50px">
+        <input type="text" class="form-control col-md-50" id="csvFileName" readonly placeholder="CSV file will appear here" value="{{ csv_file_name }}">
+        <a id="downloadLink" href="{% url 'download_csv' csv_file_name %}" class="btn btn-primary ml-6 mt-0">
+          <i class="feather icon-download"></i> Скачать
+        </a>
+      </div>
+    {% endif %}
+    {% if not csv_file_name %}
+      <div class="d-flex align-items-center ml-6 mt-6" style="margin-top: 50px">
+        <input type="text" class="form-control col-md-50" id="csvFileName1" readonly placeholder="Здесь будет созданный CSV файл" value="{{ csv_file_name }}">
+        <a id="downloadLink1" href="#" class="btn btn-primary ml-6 mt-0">
+          <i class="feather icon-download"></i> Скачать
+        </a>
+      </div>
+    {% endif %}
+  </form>
+
+  <!-- Модальное окно -->
+  <div class="modal fade" id="fileModal" tabindex="-1" role="dialog" aria-labelledby="fileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="fileModalLabel">Выберите файл</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="app-table">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Объекты</th>
+                  <th>Признаки</th>
+                  <th>Дата создания</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for data in page_obj %}
+                <tr>
+                  <td>{{ data.name }}</td>
+                  <td>{{ data.N }}</td>
+                  <td>{{ data.K }}</td>
+                  <td>{{ data.date }}</td>
+                  <td>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="chooseFile('{{ data.name }}')">Выбрать</button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .btn-white {
+    background-color: white;
+    border: 1px solid #ced4da;
+    color: black;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+    border-radius: 15px;
+  }
+  .btn-white.option-btn {
+    width: 100px;
+  }
+  .btn-white.active {
+    width: 200px;
+    border: 2px solid #000;
+    opacity: 1;
+  }
+  .btn-group-toggle .btn {
+    border-radius: 15px;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const inputValue = document.getElementById('inputValue');
+    const dropdown = document.getElementById('dropdown');
+    const methodLabel = document.getElementById('method-label');
+    const optionButtons = document.querySelectorAll('.option-btn');
+
+    function resetButtons() {
+      optionButtons.forEach(btn => btn.classList.remove('active'));
+    }
+
+    document.getElementById('features-btn').addEventListener('click', function() {
+      resetButtons();
+      this.classList.add('active');
+      inputValue.placeholder = 'Введите количество признаков';
+      dropdown.innerHTML = `
+        <option value="auto">auto</option>
+        <option value="full">full</option>
+        <option value="randomized">randomized</option>
+      `;
+      methodLabel.innerText = 'Решение системы уравнения';
+      inputValue.max = '';
+    });
+
+    document.getElementById('percentage-btn').addEventListener('click', function() {
+      resetButtons();
+      this.classList.add('active');
+      inputValue.placeholder = 'Введите количество признаков';
+      dropdown.innerHTML = `
+        <option value="svd">svd</option>
+        <option value="eigh">eigh</option>
+      `;
+      methodLabel.innerText = 'Метод отбеливания';
+      inputValue.max = '';
+    });
+
+    document.getElementById('third-option-btn').addEventListener('click', function() {
+      resetButtons();
+      this.classList.add('active');
+      inputValue.placeholder = 'Введите количество признаков';
+      dropdown.innerHTML = `
+        <option value="mu">Multiplicative Update solver</option>
+        <option value="cd">Coordinate Descent solver</option>
+      `;
+      methodLabel.innerText = 'Иттерационное решение';
+      inputValue.max = '';
+    });
+  });
+
+  function chooseFile(fileName) {
+    document.getElementById('fileName').value = fileName;
+    $('#fileModal').modal('hide');
+  }
+</script>
+
+{% endblock %}

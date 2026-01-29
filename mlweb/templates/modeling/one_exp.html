@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item active">
+            <a href="">Моделирование</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            Одноэкспоненциальная функция
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<main role="main" class="col-md-2 col-lg-12">
+  <form method="post" id="dynamic-form">
+    {% csrf_token %}
+    <div class="form-row justify-content-center">
+      <div class="form-group col-md-6">
+        <label for="integer0">Количество признаков</label>
+        <input type="number" class="form-control integer-input" id="integer0" name="integer0" min="1" required>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="integer1">Количество сэмплов</label>
+        <input type="number" class="form-control integer-input" id="integer1" name="integer1" min="1" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="rowCount">Количество семейств</label>
+      <input type="number" class="form-control integer-input" id="rowCount" name="rowCount" min="1" required>
+    </div>
+    <div id="dynamic-rows"></div>
+    <button type="submit" class="btn btn-success mt-3">Создать</button>
+    {% if csv_file_name %}
+      <div class="d-flex align-items-center ml-6 mt-6" style="margin-top: 50px">
+        <input type="text" class="form-control col-md-50" id="csvFileName" readonly placeholder="CSV file will appear here" value="{{ csv_file_name }}">
+        <a id="downloadLink" href="{% url 'download_csv' csv_file_name %}" class="btn btn-primary ml-6 mt-0">
+          <i class="feather icon-download"></i> Скачать
+        </a>
+      </div>
+    {% endif %}
+    {% if not csv_file_name %}
+      <div class="d-flex align-items-center ml-6 mt-6" style="margin-top: 50px">
+        <input type="text" class="form-control col-md-50" id="csvFileName1" readonly placeholder="Здесь будет созданный CSV файл" value="{{ csv_file_name }}">
+        <a id="downloadLink1" href="#" class="btn btn-primary ml-6 mt-0">
+          <i class="feather icon-download"></i> Скачать
+        </a>
+      </div>
+    {% endif %}
+  </form>
+</main>
+
+<script>
+  document.getElementById('rowCount').addEventListener('input', generateRows);
+
+  function generateRows() {
+    const rowCount = document.getElementById('rowCount').value;
+    const dynamicRows = document.getElementById('dynamic-rows');
+    dynamicRows.innerHTML = '';
+
+    for (let i = 0; i < rowCount; i++) {
+      const row = document.createElement('div');
+      row.className = 'form-row';
+
+      for (let j = 0; j < 3; j++) {
+        const col = document.createElement('div');
+        col.className = 'form-group col-md-4';
+
+        const label = document.createElement('label');
+        label.innerHTML = j < 2 ? `Среднее семейства ${i + 1}.${j + 1}` : `Количество кривых ${i + 1}.${j + 1}`;
+
+        const input = document.createElement('input');
+        input.type = j < 2 ? 'number' : 'number';
+        input.step = j < 2 ? '0.01' : '1';
+        input.className = 'form-control';
+        input.name = j < 2 ? `float${i + 1}_${j + 1}` : `integer${i + 1}_${j + 1}`;
+        input.required = true;
+        if (j == 2) {
+          input.min = 1;
+          input.className += ' integer-dynamic-input';
+        }
+
+        col.appendChild(label);
+        col.appendChild(input);
+        row.appendChild(col);
+      }
+
+      dynamicRows.appendChild(row);
+    }
+
+    document.querySelectorAll('.integer-dynamic-input').forEach(input => {
+      input.addEventListener('input', function() {
+        const value = this.value;
+        if (value && (value <= 0 || !Number.isInteger(Number(value)))) {
+          this.setCustomValidity('Please enter a positive integer.');
+        } else {
+          this.setCustomValidity('');
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll('.integer-input').forEach(input => {
+    input.addEventListener('input', function() {
+      const value = this.value;
+      if (value && (value <= 0 || !Number.isInteger(Number(value)))) {
+        this.setCustomValidity('Please enter a positive integer.');
+      } else {
+        this.setCustomValidity('');
+      }
+    });
+  });
+</script>
+{% endblock %}
